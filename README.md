@@ -43,10 +43,6 @@ controller ← service ← repository ← PostgreSQL
 ## الاختبارات
 3 اختبارات وحدة على `LoanService` بـ Mockito (استعارة ناجحة، كتاب مستعار، إرجاع بدون استعارة مفتوحة).
 
-## إعداد قاعدة البيانات
-كلمة السر تُقرأ من متغير بيئة:
-`DB_PASSWORD=كلمة_السر_تبعك`
-(القيمة الافتراضية `change_me`).
 
 ## ملاحظات
 - Pagination: `GET /api/books/page?page=0&size=5`
