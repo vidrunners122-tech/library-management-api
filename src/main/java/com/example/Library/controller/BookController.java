@@ -3,8 +3,10 @@ package com.example.Library.controller;
 import com.example.Library.entity.Book;
 import com.example.Library.service.BookService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @RestController
@@ -44,5 +46,8 @@ public class BookController {
     public List<Book> searchBooks(@RequestParam String title) {
         return bookService.searchByTitle(title);
     }
-
+    @GetMapping("/page")
+    public Page<Book> getBooksPage(Pageable pageable) {
+        return bookService.getBooksPage(pageable);
+    }
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class LoanService {
@@ -64,6 +65,9 @@ public class LoanService {
 
         return loanRepository.save(loan);
 
-
     }
+    public List<Loan> getAllLoans() {
+        return loanRepository.findAll();
+    }
+
 }

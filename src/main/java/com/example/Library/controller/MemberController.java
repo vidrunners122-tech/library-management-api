@@ -4,6 +4,8 @@ import com.example.Library.entity.Member;
 import com.example.Library.service.MemberService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/members")
 public class MemberController {
@@ -18,4 +20,11 @@ public class MemberController {
     public Member addMember(@RequestBody Member member) {
         return memberService.addMember(member);
     }
+    @GetMapping
+
+    public List<Member> getAllMembers() {
+        return memberService.getAllMembers();
+    }
+
+
 }

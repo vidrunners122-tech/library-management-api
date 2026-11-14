@@ -4,6 +4,8 @@ import com.example.Library.entity.Loan;
 import com.example.Library.service.LoanService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/loans")
 public class LoanController {
@@ -23,6 +25,9 @@ public class LoanController {
     public Loan returnBook(@RequestParam Long bookId) {
         return loanService.returnBook(bookId);
     }
-
+    @GetMapping
+    public List<Loan> getAllLoans() {
+        return loanService.getAllLoans();
+    }
 
 }

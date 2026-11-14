@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>المكتبة</title>
+    <style>
+        :root { --bg:#0f1117; --card:#181b24; --line:#262b38; --text:#e6e8ef; --muted:#8b92a5; --accent:#6c8cff; --ok:#3ecf8e; --bad:#ff6b6b; }
+        * { box-sizing:border-box; }
+        body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,"Segoe UI",Tahoma,sans-serif; }
+        header { padding:24px 16px 8px; text-align:center; }
+        h1 { margin:0; font-size:26px; }
+        .sub { color:var(--muted); font-size:14px; margin-top:4px; }
+        .wrap { max-width:960px; margin:0 auto; padding:16px; }
+        .bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        input { background:var(--card); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:10px; font-size:14px; flex:1; min-width:140px; }
+        input:focus { outline:none; border-color:var(--accent); }
+        button { background:var(--accent); color:#fff; border:0; padding:10px 16px; border-radius:10px; cursor:pointer; font-size:14px; }
+        button:hover { opacity:.9; }
+        button.ghost { background:transparent; border:1px solid var(--line); color:var(--text); }
+        .add { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:20px; }
+        .add h3 { margin:0 0 10px; font-size:15px; color:var(--muted); font-weight:600; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+        .book { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px; }
+        .book h4 { margin:0; font-size:17px; }
+        .author { color:var(--muted); font-size:14px; }
+        .badge { align-self:flex-start; font-size:12px; padding:3px 10px; border-radius:20px; }
+        .badge.ok { background:rgba(62,207,142,.15); color:var(--ok); }
+        .badge.bad { background:rgba(255,107,107,.15); color:var(--bad); }
+        .actions { display:flex; gap:8px; margin-top:6px; }
+        .actions button { flex:1; padding:8px; }
+        .empty { text-align:center; color:var(--muted); padding:40px 0; grid-column:1/-1; }
+        #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--line); padding:12px 20px; border-radius:12px; display:none; z-index:10; }
+        #toast.err { border-color:var(--bad); color:var(--bad); }
+        #toast.good { border-color:var(--ok); color:var(--ok); }
+    </style>
+</head>
+<body>
+<header>
+    <h1>📚 المكتبة</h1>
+    <div class="sub">الاستعارة تتم باسم العضو رقم <span id="memberLabel">1</span></div>
+</header>
+
+<div class="wrap">
+    <div class="bar">
+        <input id="search" placeholder="ابحث بعنوان الكتاب...">
+        <button onclick="searchBooks()">بحث</button>
+        <button class="ghost" onclick="loadBooks()">عرض الكل</button>
+    </div>
+
+    <div class="add">
+        <h3>إضافة كتاب جديد</h3>
+        <div class="bar" style="margin:0">
+            <input id="title" placeholder="عنوان الكتاب">
+            <input id="author" placeholder="المؤلف">
+            <button onclick="addBook()">إضافة</button>
+        </div>
+    </div>
+
+    <div id="books" class="grid"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const API = '/api';
+    const MEMBER_ID = 1; // مؤقتا: العضو رقم 1
+
+    function toast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = type || '';
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2800);
+    }
+
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    async function request(url, options) {
+        const res = await fetch(url, options);
+        let data = null;
+        try { data = await res.json(); } catch (e) {}
+        if (!res.ok) {
+            const msg = data && (data.error || data.title || data.author)
+                ? (data.error || data.title || data.author)
+                : 'حدث خطأ (' + res.status + ')';
+            throw new Error(msg);
+        }
+        return data;
+    }
+
+    function render(books) {
+        const box = document.getElementById('books');
+        if (!books.length) {
+            box.innerHTML = '<div class="empty">ما في كتب</div>';
+            return;
+        }
+        box.innerHTML = books.map(b => `
+    <div class="book">
+      <h4>${esc(b.title)}</h4>
+      <div class="author">${esc(b.author)}</div>
+      <span class="badge ${b.available ? 'ok' : 'bad'}">${b.available ? 'متاح' : 'مستعار'}</span>
+      <div class="actions">
+        ${b.available
+            ? `<button onclick="borrow(${b.id})">استعارة</button>`
+            : `<button onclick="giveBack(${b.id})">إرجاع</button>`}
+        <button class="ghost" onclick="removeBook(${b.id})">حذف</button>
+      </div>
+    </div>`).join('');
+    }
+
+    async function loadBooks() {
+        try { render(await request(API + '/books')); }
+        catch (e) { toast(e.message, 'err'); }
+    }
+
+    async function searchBooks() {
+        const q = document.getElementById('search').value.trim();
+        if (!q) return loadBooks();
+        try { render(await request(API + '/books/search?title=' + encodeURIComponent(q))); }
+        catch (e) { toast(e.message, 'err'); }
+    }
+
+    async function addBook() {
+        const title = document.getElementById('title').value;
+        const author = document.getElementById('author').value;
+        try {
+            await request(API + '/books', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, author })
+            });
+            document.getElementById('title').value = '';
+            document.getElementById('author').value = '';
+            toast('انضاف الكتاب', 'good');
+            loadBooks();
+        } catch (e) { toast(e.message, 'err'); }
+    }
+
+    async function borrow(id) {
+        try {
+            await request(API + '/loans/borrow?bookId=' + id + '&memberId=' + MEMBER_ID, { method: 'POST' });
+            toast('تمت الاستعارة', 'good');
+            loadBooks();
+        } catch (e) { toast(e.message, 'err'); }
+    }
+
+    async function giveBack(id) {
+        try {
+            await request(API + '/loans/return?bookId=' + id, { method: 'POST' });
+            toast('تم الإرجاع', 'good');
+            loadBooks();
+        } catch (e) { toast(e.message, 'err'); }
+    }
+
+    async function removeBook(id) {
+        if (!confirm('متأكد من الحذف؟')) return;
+        try {
+            const res = await fetch(API + '/books/' + id, { method: 'DELETE' });
+            if (!res.ok) throw new Error('ما قدرت أحذف الكتاب (ممكن إله استعارات)');
+            toast('انحذف الكتاب', 'good');
+            loadBooks();
+        } catch (e) { toast(e.message, 'err'); }
+    }
+
+    document.getElementById('search').addEventListener('keydown', e => { if (e.key === 'Enter') searchBooks(); });
+    loadBooks();
+</script>
+</body>
+</html>

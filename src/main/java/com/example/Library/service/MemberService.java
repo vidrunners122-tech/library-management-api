@@ -5,6 +5,8 @@ import com.example.Library.exception.ResourceNotFoundException;
 import com.example.Library.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class MemberService {
 
@@ -21,5 +23,8 @@ public class MemberService {
     public Member getMemberById(Long id) {
         return memberRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + id));
+    }
+    public List<Member> getAllMembers() {
+        return memberRepository.findAll();
     }
 }
