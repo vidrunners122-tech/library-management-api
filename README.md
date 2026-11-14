@@ -37,3 +37,22 @@ controller ← service ← repository ← PostgreSQL
 | POST | /api/members | إضافة عضو |
 | POST | /api/loans/borrow?bookId=&memberId= | استعارة |
 | POST | /api/loans/return?bookId= | إرجاع |
+## الواجهة
+بعد تشغيل المشروع افتح `http://localhost:8080` (واجهة غامقة: عرض الكتب، بحث، إضافة، استعارة، إرجاع، حذف).
+
+## الاختبارات
+3 اختبارات وحدة على `LoanService` بـ Mockito (استعارة ناجحة، كتاب مستعار، إرجاع بدون استعارة مفتوحة).
+
+## إعداد قاعدة البيانات
+كلمة السر تُقرأ من متغير بيئة:
+`DB_PASSWORD=كلمة_السر_تبعك`
+(القيمة الافتراضية `change_me`).
+
+## ملاحظات
+- Pagination: `GET /api/books/page?page=0&size=5`
+- الأعضاء: `GET/POST /api/members`
+- سجل الاستعارات: `GET /api/loans`
+
+## الخطوات القادمة
+- Spring Security (أدوار ADMIN / USER)
+- DTOs بدل إرجاع الـ Entity مباشرة
